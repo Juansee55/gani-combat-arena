@@ -38,7 +38,7 @@ function Game() {
           const save = await loadSave({ data: { token } });
           if (save) frame.current?.contentWindow?.postMessage({ type: "santatown:load", save }, window.location.origin);
         } else if (m.type === "santatown:save" && m.save) {
-          await saveProgress({ data: { token, ...(m.save as never) } });
+          await saveProgress({ data: { token, ...(m.save as { name: string; x: number; y: number; dir: "up" | "down" | "left" | "right"; attacks: number }) } });
         }
       } catch (err) {
         console.error("No se pudo guardar/cargar la partida", err);
