@@ -41,6 +41,68 @@ export type Database = {
         }
         Relationships: []
       }
+      gang_members: {
+        Row: {
+          gang_id: string
+          user_id: string
+        }
+        Insert: {
+          gang_id: string
+          user_id: string
+        }
+        Update: {
+          gang_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gang_members_gang_id_fkey"
+            columns: ["gang_id"]
+            isOneToOne: false
+            referencedRelation: "gangs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gangs: {
+        Row: {
+          id: string
+          name: string
+          owner_id: string
+          tag: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          owner_id: string
+          tag: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          owner_id?: string
+          tag?: string
+        }
+        Relationships: []
+      }
+      inventory_items: {
+        Row: {
+          item_key: string
+          quantity: number
+          user_id: string
+        }
+        Insert: {
+          item_key: string
+          quantity?: number
+          user_id: string
+        }
+        Update: {
+          item_key?: string
+          quantity?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       player_saves: {
         Row: {
           attacks: number
@@ -87,17 +149,23 @@ export type Database = {
         Row: {
           avatar_url: string
           display_name: string
+          equipped_weapon: string
           id: string
+          show_gang_tag: boolean
         }
         Insert: {
           avatar_url?: string
           display_name?: string
+          equipped_weapon?: string
           id: string
+          show_gang_tag?: boolean
         }
         Update: {
           avatar_url?: string
           display_name?: string
+          equipped_weapon?: string
           id?: string
+          show_gang_tag?: boolean
         }
         Relationships: []
       }
