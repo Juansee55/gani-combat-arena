@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_powers: {
+        Row: {
+          flying: boolean
+          giant: boolean
+          invisible: boolean
+          noclip: boolean
+          tag: string
+          user_id: string
+        }
+        Insert: {
+          flying?: boolean
+          giant?: boolean
+          invisible?: boolean
+          noclip?: boolean
+          tag?: string
+          user_id: string
+        }
+        Update: {
+          flying?: boolean
+          giant?: boolean
+          invisible?: boolean
+          noclip?: boolean
+          tag?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       player_saves: {
         Row: {
           attacks: number
@@ -53,6 +80,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -61,7 +106,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -188,6 +233,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

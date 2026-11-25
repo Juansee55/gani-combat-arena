@@ -1,0 +1,13 @@
+CREATE TYPE public.app_role AS ENUM ('admin', 'user');
+CREATE TABLE public.user_roles (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL, role public.app_role NOT NULL, UNIQUE(user_id, role));
+GRANT SELECT ON public.user_roles TO authenticated;
+GRANT ALL ON public.user_roles TO service_role;
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Read own role" ON public.user_roles FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE TABLE public.admin_powers (user_id uuid PRIMARY KEY, tag text NOT NULL DEFAULT '', invisible boolean NOT NULL DEFAULT false, giant boolean NOT NULL DEFAULT false, flying boolean NOT NULL DEFAULT false, noclip boolean NOT NULL DEFAULT false);
+GRANT SELECT, INSERT, UPDATE ON public.admin_powers TO authenticated;
+GRANT ALL ON public.admin_powers TO service_role;
+ALTER TABLE public.admin_powers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins read own powers" ON public.admin_powers FOR SELECT TO authenticated USING (auth.uid() = user_id AND EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'));
+CREATE POLICY "Admins insert own powers" ON public.admin_powers FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id AND EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'));
+CREATE POLICY "Admins update own powers" ON public.admin_powers FOR UPDATE TO authenticated USING (auth.uid() = user_id AND EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin')) WITH CHECK (auth.uid() = user_id AND EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'));
