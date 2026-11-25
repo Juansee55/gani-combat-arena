@@ -153,11 +153,13 @@
 
   // --- Guardado en la nube (la página padre habla con la base de datos) ---
   window.addEventListener('message', (e) => {
-    if (e.origin !== location.origin) return;
+    if (e.origin !== location.origin || e.source !== window.parent) return;
     const m = e.data; const g = G();
     if (m && m.type === 'santatown:load' && m.save && g) {
       const s = m.save;
-      g.player.x = s.x; g.player.y = s.y; g.player.dir = s.dir;
+      if (window.__CITY) window.__CITY.applySave(s);
+      else { g.player.x = s.x; g.player.y = s.y; }
+      g.player.dir = s.dir;
       if (s.name) g.player.name = s.name;
       attacks = s.attacks || 0;
     }
@@ -166,7 +168,7 @@
   setInterval(() => {
     const g = G(); if (!g) return;
     const p = g.player;
-    post({ type: 'santatown:save', save: { name: p.name || 'Jugador', x: p.x, y: p.y, dir: p.dir, attacks } });
+    post({ type: 'santatown:save', save: { map: window.__CITY ? 'era-city-v1' : 'santatown', name: p.name || 'Jugador', x: p.x, y: p.y, dir: p.dir, attacks } });
   }, 8000);
 
   function init() { addButtons(); post({ type: 'santatown:ready' }); }

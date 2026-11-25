@@ -14,7 +14,7 @@ export const loadSave = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("player_saves")
-      .select("name,x,y,dir,attacks")
+      .select("name,x,y,dir,attacks,map")
       .eq("token_hash", await hashToken(data.token))
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -26,6 +26,7 @@ export const saveProgress = createServerFn({ method: "POST" })
     z
       .object({
         token: tokenSchema,
+        map: z.enum(["santatown", "era-city-v1"]).default("santatown"),
         name: z.string().trim().min(1).max(24),
         x: z.number().finite().min(0).max(100000),
         y: z.number().finite().min(0).max(100000),

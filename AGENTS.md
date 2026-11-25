@@ -29,4 +29,6 @@ use the editor.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
 
-- The game is a static HTML file in public/game/ embedded via iframe on /; new weapons live in public/game/weapons.js, and saves go through postMessage to the parent page, which calls server functions (no login, per-device token stored hashed).
+- Keep the static game embedded in an iframe; isolate city rendering/collision in city.js and weapon animation in weapons.js so the existing sprite editor remains usable.
+- Guest saves use hashed per-device tokens and a map identifier; account profiles and admin powers use authenticated server functions and owner-scoped RLS so legacy saves remain compatible.
+- Admin roles live only in user_roles and are provisioned for the authorized verified email by a database auth trigger; browser state and editable profiles never authorize server operations.

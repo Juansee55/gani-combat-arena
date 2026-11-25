@@ -154,3 +154,14 @@
     color: var(--color-foreground);
   }
 }
+
+:root {
+  --google-background: oklch(1 0 0);
+  --google-border: oklch(0.567 0.005 133);
+  --google-foreground: oklch(0.243 0 0);
+}
+.google-signin {
+  background: var(--google-background);
+  border-color: var(--google-border);
+  color: var(--google-foreground);
+}

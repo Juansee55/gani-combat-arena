@@ -47,6 +47,7 @@ export type Database = {
           created_at: string
           dir: string
           id: string
+          map: string
           name: string
           token_hash: string
           updated_at: string
@@ -59,6 +60,7 @@ export type Database = {
           created_at?: string
           dir?: string
           id?: string
+          map?: string
           name?: string
           token_hash: string
           updated_at?: string
@@ -71,12 +73,31 @@ export type Database = {
           created_at?: string
           dir?: string
           id?: string
+          map?: string
           name?: string
           token_hash?: string
           updated_at?: string
           weapon?: string
           x?: number
           y?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string
+          display_name: string
+          id: string
+        }
+        Insert: {
+          avatar_url?: string
+          display_name?: string
+          id: string
+        }
+        Update: {
+          avatar_url?: string
+          display_name?: string
+          id?: string
         }
         Relationships: []
       }

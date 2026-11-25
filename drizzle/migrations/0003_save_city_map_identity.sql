@@ -1,0 +1,1 @@
+ALTER TABLE public.player_saves ADD COLUMN map text NOT NULL DEFAULT 'santatown';

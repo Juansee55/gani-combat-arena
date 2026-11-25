@@ -15,6 +15,20 @@
       "when": 1795642381240,
       "tag": "0001_game_admin_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795642596188,
+      "tag": "0002_account_profiles_verified_admin",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795642654963,
+      "tag": "0003_save_city_map_identity",
+      "breakpoints": true
     }
   ]
 }

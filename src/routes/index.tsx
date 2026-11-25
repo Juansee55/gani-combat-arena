@@ -1,14 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { loadSave, saveProgress } from "@/lib/saves.functions";
+import cityAsset from "@/assets/era-city.png.asset.json";
+import { GameAccountPanel, type GameAccount } from "@/components/game-account";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Santa Town — Graal Era" },
-      { name: "description", content: "Explora Santa Town con nuevos ataques: Corte Cruzado y Lanza Relámpago. Tu progreso se guarda." },
-      { property: "og:title", content: "Santa Town — Graal Era" },
-      { property: "og:description", content: "Juego navideño pixel art con nuevos movimientos de armas y guardado en la nube." },
+      { title: "Gani Combat Arena — Ciudad Era" },
+      { name: "description", content: "Recorre Ciudad Era, sus calles e islas, con ataques Gani, perfil y partida guardada." },
+      { property: "og:title", content: "Gani Combat Arena — Ciudad Era" },
+      { property: "og:description", content: "Ciudad pixel art con ataques Gani y poderes de administrador protegidos." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -27,6 +30,18 @@ function getToken() {
 
 function Game() {
   const frame = useRef<HTMLIFrameElement>(null);
+  const account = useRef<GameAccount | null>(null);
+  const load = useServerFn(loadSave);
+  const saveFn = useServerFn(saveProgress);
+  const onAccount = useCallback((next: GameAccount | null) => {
+    account.current = next;
+    frame.current?.contentWindow?.postMessage({ type: "city:powers", isAdmin: next?.isAdmin ?? false, powers: next?.powers }, window.location.origin);
+    if (next?.profile) frame.current?.contentWindow?.postMessage({ type: "city:profile", name: next.profile.display_name }, window.location.origin);
+  }, []);
+  const configure = useCallback(() => {
+    frame.current?.contentWindow?.postMessage({ type: "city:config", url: cityAsset.url }, window.location.origin);
+    onAccount(account.current);
+  }, [onAccount]);
 
   useEffect(() => {
     const token = getToken();
@@ -35,10 +50,12 @@ function Game() {
       const m = e.data as { type?: string; save?: Record<string, unknown> };
       try {
         if (m.type === "santatown:ready") {
-          const save = await loadSave({ data: { token } });
+          configure();
+          const save = await load({ data: { token } });
           if (save) frame.current?.contentWindow?.postMessage({ type: "santatown:load", save }, window.location.origin);
+          onAccount(account.current);
         } else if (m.type === "santatown:save" && m.save) {
-          await saveProgress({ data: { token, ...(m.save as { name: string; x: number; y: number; dir: "up" | "down" | "left" | "right"; attacks: number }) } });
+          await saveFn({ data: { token, ...(m.save as { map: "santatown" | "era-city-v1"; name: string; x: number; y: number; dir: "up" | "down" | "left" | "right"; attacks: number }) } });
         }
       } catch (err) {
         console.error("No se pudo guardar/cargar la partida", err);
@@ -46,11 +63,12 @@ function Game() {
     };
     window.addEventListener("message", onMsg);
     return () => window.removeEventListener("message", onMsg);
-  }, []);
+  }, [load, saveFn, configure, onAccount]);
 
   return (
     <main className="fixed inset-0 bg-background">
-      <iframe ref={frame} src="/game/santatown.html" title="Santa Town" className="h-full w-full border-0" />
+      <iframe ref={frame} onLoad={configure} src="/game/santatown.html" title="Ciudad Era" className="h-full w-full border-0" />
+      <GameAccountPanel onChange={onAccount} />
     </main>
   );
 }

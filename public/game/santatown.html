@@ -26,6 +26,10 @@
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
+    #mobile-action-container { display: grid; grid-template-columns: repeat(2, 52px); gap: 10px; align-items: center; }
+    #mobile-action-container > * { margin: 0; }
+    #mobile-hud-topright { max-width: 180px; }
+    @media (max-width: 420px) { #mobile-hud-topright { top: 66px; } }
     /* Custom scrollbars */
     ::-webkit-scrollbar {
       width: 6px;
@@ -974,7 +978,7 @@
 
       // Constants
       const TILE_SIZE = 16; // Source tile is 16x16
-      const SCALE = 2.5; // Render scaling for chunky retro pixel-art feel
+      const SCALE = 1.5; // Render scaling for chunky retro pixel-art feel
       const SECTOR_TILES_X = 32;
       const SECTOR_TILES_Y = 32;
       const GRID_COLS = 3;
@@ -1444,7 +1448,7 @@
       const particles = [];
 
       // Weather (Falling Snow)
-      let weatherSnow = true;
+      let weatherSnow = false;
       const weatherFlakes = [];
       for (let i = 0; i < 120; i++) {
         weatherFlakes.push({
@@ -1700,8 +1704,8 @@
 
       document.getElementById('phone-app-teleport')?.addEventListener('click', () => {
         closePhone();
-        player.x = 24 * TILE_SIZE;
-        player.y = 32 * TILE_SIZE;
+        player.x = window.__CITY?.spawn.x ?? 24 * TILE_SIZE;
+        player.y = window.__CITY?.spawn.y ?? 32 * TILE_SIZE;
         playSound('teleport');
         const toast = document.getElementById('sector-toast');
         if (toast) {
@@ -1976,6 +1980,7 @@
       let stepSoundTimer = 0;
 
       function update() {
+        if (window.__CITY) window.__CITY.update();
         if (window.__updateWeapons) window.__updateWeapons();
         // Input movement vector
         let moveX = 0;
@@ -2009,7 +2014,7 @@
         const currTileX = Math.floor(player.x / TILE_SIZE);
         const currTileY = Math.floor(player.y / TILE_SIZE);
         const currIdx = tileIndex(currTileX, currTileY);
-        player.onIce = solidMap[currIdx] === 2;
+        player.onIce = !window.__CITY && solidMap[currIdx] === 2;
 
         if (player.onIce) {
           // Slippery ice physics! Inertia and low friction
@@ -2045,6 +2050,7 @@
 
         // Collision detection against solid tiles
         function checkCollision(nx, ny) {
+          if (window.__CITY) return !window.__CITY.ready || window.__CITY.blocked(nx, ny, player.radius);
           const corners = [
             { x: nx - player.radius, y: ny - player.radius },
             { x: nx + player.radius, y: ny - player.radius },
@@ -2115,7 +2121,7 @@
           // Check hit solid
           const tx = Math.floor(sb.x / TILE_SIZE);
           const ty = Math.floor(sb.y / TILE_SIZE);
-          const isHit = (tx >= 0 && tx < WORLD_TILES_X && ty >= 0 && ty < WORLD_TILES_Y && solidMap[tileIndex(tx, ty)] === 1);
+          const isHit = window.__CITY ? window.__CITY.blocked(sb.x, sb.y, 0, true) : (tx >= 0 && tx < WORLD_TILES_X && ty >= 0 && ty < WORLD_TILES_Y && solidMap[tileIndex(tx, ty)] === 1);
 
           if (isHit || sb.life <= 0) {
             playSound('splat');
@@ -2159,7 +2165,7 @@
           lastSectorX = currentSectorCol;
           lastSectorY = currentSectorRow;
           const levelFile = LEVEL_NAMES[currentSectorRow][currentSectorCol];
-          const levelTitle = SECTOR_TITLES[currentSectorRow][currentSectorCol];
+          const levelTitle = window.__CITY ? 'Ciudad Era' : SECTOR_TITLES[currentSectorRow][currentSectorCol];
 
           document.getElementById('current-sector-name').textContent = levelFile;
 
@@ -2231,6 +2237,7 @@
         const startY = Math.max(0, Math.floor(cameraY / TILE_SIZE));
         const endY = Math.min(WORLD_TILES_Y - 1, Math.ceil((cameraY + canvas.height / SCALE) / TILE_SIZE));
 
+        if (window.__CITY) { window.__CITY.draw(ctx); } else {
         // 1. Draw Ground Layer
         for (let ty = startY; ty <= endY; ty++) {
           for (let tx = startX; tx <= endX; tx++) {
@@ -2433,10 +2440,19 @@
           ctx.fillText(npc.name, nx, ny - 16);
         }
 
+        }
         // 5. Draw Player Character (Graal Online Exact Coordinate Sprite System)
         const px = player.x;
         const py = player.y;
 
+        const adminPowers = window.__CITY?.powers || {};
+        ctx.save();
+        if (adminPowers.invisible) ctx.globalAlpha = 0;
+        const characterScale = adminPowers.giant ? 3 : 1;
+        const elevation = adminPowers.flying ? 40 + Math.sin(performance.now() / 300) * 3 : 0;
+        ctx.translate(px, py - elevation);
+        ctx.scale(characterScale, characterScale);
+        ctx.translate(-px, -py);
         // Shadow under player (Feet anchor at Y=29 in 32x32 space)
         ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
         ctx.beginPath();
@@ -2541,7 +2557,7 @@
         ctx.font = '6px "Press Start 2P"';
         ctx.fillStyle = '#38bdf8';
         ctx.textAlign = 'center';
-        ctx.fillText(player.name || "Jugador", px, py - 44);
+        ctx.fillText((adminPowers.tag ? "[" + adminPowers.tag + "] " : "") + (player.name || "Jugador"), px, py - 44);
 
         // Retro Speech Bubble above character
         if (player.speechBubble) {
@@ -2572,6 +2588,7 @@
           ctx.fillText(player.speechBubble, px, by + 12);
         }
 
+        ctx.restore();
         // 6. Draw Snowballs
         for (const sb of snowballs) {
           ctx.fillStyle = '#ffffff';
@@ -2580,7 +2597,10 @@
           ctx.fill();
         }
 
-        if (window.__drawWeapons) window.__drawWeapons(ctx);
+        if (window.__drawWeapons && !adminPowers.invisible) {
+          ctx.save(); ctx.translate(px, py - elevation); ctx.scale(characterScale, characterScale); ctx.translate(-px, -py);
+          window.__drawWeapons(ctx); ctx.restore();
+        }
         // 7. Draw Particles
         for (const p of particles) {
           ctx.fillStyle = p.color;
@@ -2599,6 +2619,7 @@
           }
         }
 
+        if (window.__CITY) { window.__CITY.minimap(ctx, canvas, player); return; }
         // 9. Draw Minimap in top-right corner
         const mmW = 84;
         const mmH = 112;
@@ -3165,6 +3186,7 @@
 
     });
 </script>
+<script src="/game/city.js"></script>
 <script src="/game/weapons.js"></script>
 </body>
 </html>
