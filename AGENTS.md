@@ -28,3 +28,5 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+- The game is a static HTML file in public/game/ embedded via iframe on /; new weapons live in public/game/weapons.js, and saves go through postMessage to the parent page, which calls server functions (no login, per-device token stored hashed).
